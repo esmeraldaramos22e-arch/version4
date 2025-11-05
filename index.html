@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>📚 Mural de Tareas</title>
+<style>
+  body {font-family:Arial, sans-serif;background:#f5f7fa;padding:20px;}
+  h1 {color:#5e35b1;text-align:center;}
+  .contenedor{max-width:700px;margin:auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+  .tarea{border:2px solid #e0d7fa;padding:15px;margin:10px 0;border-radius:10px;}
+  .botones{margin-top:10px;text-align:right;}
+  button{background:#7e57c2;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;}
+  #publicarForm{display:none;margin-top:20px;}
+  input, textarea{width:100%;padding:8px;margin-top:5px;border-radius:8px;border:1px solid #ccc;}
+</style>
+</head>
+<body>
+
+<h1>📚 Mural de Publicaciones</h1>
+<div class="contenedor">
+  <div id="tareas"></div>
+
+  <div id="loginDocente">
+    <button id="btnDocente">👩‍🏫 Ingresar como docente</button>
+  </div>
+
+  <div id="publicarForm">
+    <h3>Nueva tarea</h3>
+    <input id="titulo" placeholder="Título">
+    <textarea id="descripcion" rows="3" placeholder="Descripción"></textarea>
+    <input id="autor" placeholder="Autor">
+    <button id="btnPublicar">📤 Publicar</button>
+    <button id="btnSalir">🚪 Cerrar sesión</button>
+  </div>
+</div>
+
+<script>
+  const scriptURL = "https://script.google.com/macros/s/AKfycbwq4VM70QtBjR9P9COuEUXYxvBwzUWu74MX6Y2ZoTk0M-dSROYPFkC5GAgf0t83z0CT/exec"; // <--- pega aquí el enlace de Google Apps Script
+  const contTareas = document.getElementById("tareas");
+  const formPublicar = document.getElementById("publicarForm");
+  const btnDocente = document.getElementById("btnDocente");
+  const loginDiv = document.getElementById("loginDocente");
+
+  let esDocente = false;
+  const codigoDocente = "1234"; // Contraseña secreta
+
+  async function cargarTareas() {
+    const res = await fetch(scriptURL);
+    const tareas = await res.json();
+    contTareas.innerHTML = "";
+    tareas.reverse().forEach(t => {
+      const div = document.createElement("div");
+      div.className = "tarea";
+      div.innerHTML = `
+        <h3>${t.titulo}</h3>
+        <p>${t.descripcion}</p>
+        <small>📅 ${new Date(t.fecha).toLocaleString()} | ✍️ ${t.autor}</small>
+      `;
+      if (esDocente) {
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "🗑️ Eliminar";
+        delBtn.onclick = async () => {
+          await fetch(`${scriptURL}?titulo=${encodeURIComponent(t.titulo)}`, {method: "DELETE"});
+          cargarTareas();
+        };
+        div.appendChild(delBtn);
+      }
+      contTareas.appendChild(div);
+    });
+  }
+
+  btnDocente.onclick = () => {
+    const clave = prompt("Ingrese el código de docente:");
+    if (clave === codigoDocente) {
+      esDocente = true;
+      formPublicar.style.display = "block";
+      loginDiv.style.display = "none";
+    } else {
+      alert("Código incorrecto");
+    }
+  };
+
+  document.getElementById("btnSalir").onclick = () => {
+    esDocente = false;
+    formPublicar.style.display = "none";
+    loginDiv.style.display = "block";
+    cargarTareas();
+  };
+
+  document.getElementById("btnPublicar").onclick = async () => {
+    const data = {
+      titulo: document.getElementById("titulo").value,
+      descripcion: document.getElementById("descripcion").value,
+      autor: document.getElementById("autor").value
+    };
+    if (!data.titulo || !data.descripcion) {
+      alert("Completa todos los campos");
+      return;
+    }
+    await fetch(scriptURL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+    document.getElementById("titulo").value = "";
+    document.getElementById("descripcion").value = "";
+    cargarTareas();
+  };
+
+  // Recargar tareas automáticamente cada 5 segundos
+  setInterval(cargarTareas, 5000);
+  cargarTareas();
+</script>
+
+</body>
+</html>
