@@ -5,46 +5,49 @@
 <title>📚 Mural de Publicaciones</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
-    background: #f3e5f5;
-    text-align: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #8e24aa, #ce93d8);
+    color: #333;
     margin: 0;
     padding: 20px;
+    text-align: center;
   }
   .contenedor {
-    max-width: 700px;
+    max-width: 750px;
     margin: auto;
     background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+  }
+  h2 {
+    color: #6a1b9a;
+    margin-bottom: 15px;
+  }
+  input, textarea {
+    width: 90%;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 14px;
   }
   textarea {
-    width: 90%;
-    height: 80px;
-    border-radius: 8px;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
+    height: 90px;
   }
   button {
     background: #6a1b9a;
     color: white;
     border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
     cursor: pointer;
     margin: 5px;
+    font-size: 14px;
+    transition: background 0.3s;
   }
   button:hover {
     background: #8e24aa;
-  }
-  .tarea {
-    background: #ede7f6;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: left;
   }
   #cerrarBtn {
     display: none;
@@ -52,6 +55,28 @@
   }
   #cerrarBtn:hover {
     background: #f44336;
+  }
+  .tarea {
+    background: #f3e5f5;
+    margin: 10px auto;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-align: left;
+    max-width: 90%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    animation: aparecer 0.5s ease;
+  }
+  .tarea strong {
+    color: #4a148c;
+  }
+  .fecha {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+  }
+  @keyframes aparecer {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
   }
 </style>
 </head>
@@ -67,14 +92,13 @@
 
 <script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbwaT-pioJMpqvGENVnDhtDyNXp1WeFvgWBGfsEcrdN-_ND2zJiROnRBSewOLvjNgmXiXw/exec";
-const codigoDocente = "1234"; 
+const codigoDocente = "1234";
 let modoDocente = false;
 
 document.getElementById("publicarBtn").addEventListener("click", async () => {
   const codigo = document.getElementById("codigo").value.trim();
   const texto = document.getElementById("texto").value.trim();
 
-  // Activar modo docente
   if (!modoDocente && codigo === codigoDocente) {
     modoDocente = true;
     document.getElementById("cerrarBtn").style.display = "inline-block";
@@ -83,7 +107,6 @@ document.getElementById("publicarBtn").addEventListener("click", async () => {
     return;
   }
 
-  // Verificar modo docente
   if (!modoDocente) {
     alert("Ingresa el código del docente para publicar");
     return;
@@ -91,9 +114,11 @@ document.getElementById("publicarBtn").addEventListener("click", async () => {
 
   if (!texto) return alert("Escribe algo para publicar");
 
+  const fecha = new Date().toLocaleString("es-EC", { dateStyle: "short", timeStyle: "short" });
+
   await fetch(scriptURL, {
     method: "POST",
-    body: JSON.stringify({ action: "publicar", nombre: "Docente", texto }),
+    body: JSON.stringify({ action: "publicar", nombre: "Docente", texto: `${texto}\n📅 ${fecha}` }),
     headers: { "Content-Type": "application/json" }
   });
 
@@ -101,7 +126,6 @@ document.getElementById("publicarBtn").addEventListener("click", async () => {
   cargarTareas();
 });
 
-// Botón cerrar sesión
 document.getElementById("cerrarBtn").addEventListener("click", () => {
   modoDocente = false;
   document.getElementById("cerrarBtn").style.display = "none";
@@ -133,7 +157,7 @@ async function cargarTareas() {
     div.className = "tarea";
     div.innerHTML = `
       <strong>${t.nombre || "Docente"}</strong>
-      <p>${t.texto}</p>
+      <p>${t.texto.replace(/\n📅/, "<br><span class='fecha'>📅")}</span></p>
       ${modoDocente ? `<button onclick="eliminarTarea('${t.nombre}','${t.texto}')">🗑️ Eliminar</button>` : ""}
     `;
     mural.appendChild(div);
